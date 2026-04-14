@@ -1,6 +1,9 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Signup() {
+  // Navigate for re-routing
+  const navigate = useNavigate();
   // State to hold form values
   const [formData, setFormData] = useState({
     fullName: "",
@@ -16,21 +19,60 @@ export default function Signup() {
     setFormData((prev) => ({ ...prev, [id]: value }));
   };
 
-  // on click function for submit button
-  const handleSubmit = (e) => {
-    e.preventDefault(); 
-    console.log("Form submitted!", formData);
+  // submit to backend
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
+    // validate passwords
     if (formData.password !== formData.confirmPassword) {
       alert("Passwords do not match!");
       return;
     }
 
-    // Replace this later: post user data to back-end instead of alert
-    alert("Signup successful!"); 
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: formData.fullName,
+          username: formData.username,
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Signup failed");
+      }
+
+      // for now print alert, need to redirect to /home later
+      console.log("Signup success:", data);
+      
+      navigate("/");
+      // alert("Signup successful!");
+
+      // store token (for later auth use)
+      localStorage.setItem("token", data.token);
+
+      // optional: clear form
+      setFormData({
+        fullName: "",
+        username: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+      });
+
+    } catch (error) {
+      console.error(error);
+      alert(error.message);
+    }
   };
 
-  // Signup Form:
   return (
     <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
       <div className="card shadow-sm p-4" style={{ maxWidth: "450px", width: "90%" }}>
@@ -97,7 +139,9 @@ export default function Signup() {
             />
           </div>
 
-          <button type="submit" className="btn btn-success w-100">Sign Up</button>
+          <button type="submit" className="btn btn-success w-100">
+            Sign Up
+          </button>
 
           <p className="text-center mt-3">
             Already have an account? <a href="/login">Login</a>

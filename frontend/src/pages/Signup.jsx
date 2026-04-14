@@ -46,7 +46,7 @@ export default function Signup() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Signup failed");
+        throw new Error(data.message || "Signup failed"); 
       }
 
       // for now print alert, need to redirect to /home later
@@ -57,15 +57,6 @@ export default function Signup() {
 
       // store token (for later auth use)
       localStorage.setItem("token", data.token);
-
-      // optional: clear form
-      setFormData({
-        fullName: "",
-        username: "",
-        email: "",
-        password: "",
-        confirmPassword: "",
-      });
 
     } catch (error) {
       console.error(error);

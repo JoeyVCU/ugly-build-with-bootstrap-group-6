@@ -53,29 +53,42 @@ const signupUser = async (req, res) => {
 // Login
 const loginUser = async (req, res) => {
   try {
-    const { email, username, password } = req.body;
+    const { usernameOrEmail, password } = req.body;
 
-    // Find user by email or username
+    console.log("LOGIN REQUEST BODY:", req.body);
+
     const user = await User.findOne({
       $or: [
-        email ? { email } : null,
-        username ? { username } : null,
-      ].filter(Boolean),
+        { email: usernameOrEmail },
+        { username: usernameOrEmail }
+      ]
     });
 
-    // Check user creds
-    if (user && (await bcrypt.compare(password, user.password))) {
-      res.json({
-        _id: user._id,
-        name: user.name,
-        username: user.username,
-        email: user.email,
-        token: generateToken(user._id),
-      });
-    } else {
-      res.status(401).json({ message: "Invalid email/username or password" });
+    console.log("USER FOUND:", user);
+
+    if (!user) {
+      console.log("NO USER FOUND");
+      return res.status(401).json({ message: "Invalid email/username or password" });
     }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    console.log("PASSWORD MATCH RESULT:", isMatch);
+
+    if (!isMatch) {
+      console.log("PASSWORD WRONG");
+      return res.status(401).json({ message: "Invalid email/username or password" });
+    }
+
+    res.json({
+      _id: user._id,
+      username: user.username,
+      email: user.email,
+      token: generateToken(user._id)
+    });
+
   } catch (error) {
+    console.log("LOGIN ERROR:", error);
     res.status(500).json({ message: error.message });
   }
 };

@@ -1,32 +1,59 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Login() {
-  // Keep username and password in state
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     usernameOrEmail: "",
     password: "",
   });
 
-  // update fields when typing
   const handleChange = (e) => {
     const { id, value } = e.target;
     setFormData((prev) => ({ ...prev, [id]: value }));
   };
 
-  // on click function for login button
-  const handleSubmit = (e) => {
-    e.preventDefault(); 
-    console.log("Login attempt:", formData);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-    // Replace this later: Check username and password from our back-end when built
     if (!formData.usernameOrEmail || !formData.password) {
       alert("Please enter both username/email and password!");
       return;
     }
 
-    // Replace this later: instead of an alert we need to store user data in browser(localstorage?) 
-    // and reroute to search
-    alert("Login successful!"); 
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          usernameOrEmail: formData.usernameOrEmail,
+          password: formData.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Login failed");
+      }
+
+      console.log("Login success:", data);
+
+      // store token
+      localStorage.setItem("token", data.token);
+
+      alert("Login successful!");
+
+      // redirect to home (or dashboard)
+      navigate("/");
+
+    } catch (error) {
+      console.error(error);
+      alert(error.message);
+    }
   };
 
   return (
@@ -36,7 +63,9 @@ export default function Login() {
 
         <form onSubmit={handleSubmit}>
           <div className="mb-3">
-            <label htmlFor="usernameOrEmail" className="form-label">Username or Email</label>
+            <label htmlFor="usernameOrEmail" className="form-label">
+              Username or Email
+            </label>
             <input
               type="text"
               id="usernameOrEmail"
@@ -59,7 +88,9 @@ export default function Login() {
             />
           </div>
 
-          <button type="submit" className="btn btn-primary w-100">Login</button>
+          <button type="submit" className="btn btn-primary w-100">
+            Login
+          </button>
 
           <p className="text-center mt-3">
             Don't have an account? <a href="/signup">Sign up</a>
